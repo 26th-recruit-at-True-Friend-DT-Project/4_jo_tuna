@@ -165,8 +165,8 @@ def back_test(money: int, interval: int, start_day: str, end_day: str, stock_lis
     first_date = 0
     for i in stock_code:
         idx = ks_df[ks_df['ticker']==i].index
-        org_time = int(ks_df['start_date'][idx].values[0])
-        # print(f"시작일 :: {first_date}, org time :: {org_time}\n\n\n\n\n")
+        org_time = ks_df['start_date'][idx].values[0]
+        
         if start_from_latest_stock:
             if first_date == 0 or first_date < org_time:
                 first_date = org_time
@@ -267,8 +267,9 @@ def get_month_range(year, month):
 
 def setting_json(info, df):
     # 시작일, 종료일 설정    
-    start_date = get_month_range(int(info['startYear'][0]), int(info['startMonth'][0]))[0]
-    end_date = get_month_range(int(info['endYear'][0]), int(info['endMonth'][0]))[1]
+    sy, sm, ey, em = info['startYear'][0], str(info['startMonth'][0]).zfill(2), info['endYear'][0], str(info['endMonth'][0]).zfill(2)
+    start_date = f"{sy}{sm}01"
+    end_date = ey+em+str(get_month_range(int(ey), int(em))[1])
     
     stock_list = []
     for t, r in zip(info['ticker'], info['ratio']):
@@ -276,14 +277,25 @@ def setting_json(info, df):
         tmp = [df['ticker'][idx].values[0], t, float(r)/100]
         stock_list.append(tmp)
         
+    # 리밸런싱 주기 설정
+    interval_month = info['periods'][0]
+    if interval_month == 'everyYear':
+        interval_month = 12
+    elif interval_month == 'everySemiannual':
+        interval_month = 6
+    elif interval_month == 'everyQuarter':
+        interval_month = 3
+    elif interval_month == 'everyMonth':
+        interval_month = 1
+        
     input_value = {
         "num_of_portfolio": 1,
         "start_from_latest_stock": 0,
         "portfolio_0": {
             "stock_list": stock_list,
-            "balance": info['moneyToStart'][0],
-            "monthly_amount": info['monthlySave'][0],
-            "interval_month": info['periods'][0],
+            "balance": float(info['moneyToStart'][0]),
+            "monthly_amount": float(info['monthlySave'][0]),
+            "interval_month": interval_month,
             "start_date": start_date,
             "end_date": end_date
         }
@@ -295,7 +307,7 @@ def setting_json(info, df):
 def rebalance(info):
     ks_df = pd.read_csv('utils/data/korea_stock.csv')
     stock_info = setting_json(info, ks_df)
-    num_of_portfolio = stock_info['num_of_portfolio']  # 테스트할 포트폴리오 개수
+    num_of_portfolio = stock_info['num_of_portfolio']
     start_from_latest_stock = stock_info['start_from_latest_stock']  # 가장 최근에 상장한 날짜부터 계산할 지 여부: "true" or "false", "false" 인 경우에는 가장 처음에 상장한 날짜부터 테스트
     df_list =[]
 
