@@ -1,0 +1,37 @@
+{% extends 'base.html' %} {% block contents %}
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h3 class="m-0 font-weight-bold text-primary">OO증권 추천 종목</h3>
+  </div>
+
+  <!-- Result Tabs -->
+  <div class="container">
+    <!-- Result Tab Navigation -->
+    <ul class="tabs">
+      <li class="tab-link current border-bottom-primary" data-tab="tab_summary">
+        Summary
+      </li>
+      <li class="tab-link" data-tab="tab_metrics">Metrics</li>
+      <li class="tab-link" data-tab="tab_annualReturns">Annual Returns</li>
+      <li class="tab-link" data-tab="tab_monthlyReturns">Monthly Returns</li>
+      <li class="tab-link" data-tab="tab_rollingReturns">Rolling Returns</li>
+    </ul>
+
+    <!-- Result Tab - Summary -->
+    {% include 'backtesting/tabs/tab-summary-sec.html' %}
+
+    <!-- Result Tab - Metrics  -->
+    {% include 'backtesting/tabs/tab-metrics.html' %}
+
+    <!-- Result Tab- Annual Returns  -->
+    {% include 'backtesting/tabs/tab-annualreturns.html' %}
+
+    <!-- Result Tab- Monthly Returns  -->
+    {% include 'backtesting/tabs/tab-monthlyreturns.html' %}
+
+    <!-- Result Tab - Rolling Returns -->
+    {% include 'backtesting/tabs/tab-rollingreturns.html' %}
+  </div>
+</div>
+
+{% endblock contents %}

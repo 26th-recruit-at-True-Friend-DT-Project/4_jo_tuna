@@ -1,4 +1,6 @@
+from collections import defaultdict
 from flask import Flask, session, render_template, redirect, request, url_for 
+from utils.rebalancing import rebalance
 
 application = Flask(__name__)
 
@@ -7,20 +9,22 @@ def main():
     return render_template("index.html")
 
 
-@application.route("/quant-korea")
-def quant_korea():
-    return render_template("backtesting/quant-korea.html", ticker=ticker)
-
-
-@application.route("/quant-usa")
-def quant_usa():
-    return render_template("backtesting/quant-usa.html")
+@application.route("/quant", methods=['GET', 'POST'])
+def quant():
+    if request.method == "POST":
+        return render_template("backtesting/quant.html", info=info)
+    else:
+        return render_template("backtesting/quant.html")
 
 
 @application.route("/rebalancing-korea", methods=['GET', 'POST'])
 def rebalancing_korea():
     if request.method == "POST":
-        info = dict(request.form)
+        # json 형식의 input value 생성
+        info = defaultdict(list)
+        for k, v in request.form.lists():
+            info[k] = v
+        print(rebalance(info))
         return render_template("backtesting/rebalancing-korea.html", info=info)
     else:
         return render_template("backtesting/rebalancing-korea.html")
@@ -34,20 +38,45 @@ def rebalancing_usa():
     else:
         return render_template("backtesting/rebalancing-usa.html")
 
-
+'''
 @application.route("/portfolio-guru")
 def guru():
     return render_template("portfolio/guru.html")
+'''
+
+@application.route("/ray-dalio")
+def ray():
+    return render_template("portfolio/guru-result.html")
+
+
+@application.route("/harry-browne")
+def harry():
+    return render_template("portfolio/guru-result.html")
+
+
+@application.route("/sixty-forty")
+def sixty_forty():
+    return render_template("portfolio/guru-result.html")
+
+
+@application.route("/forty-sixty")
+def forty_sixty():
+    return render_template("portfolio/guru-result.html")
 
 
 @application.route("/portfolio-kis")
 def kis():
-    return render_template("portfolio/kis.html")
+    return render_template("portfolio/sec.html")
 
 
 @application.route("/portfolio-kb")
 def kb():
-    return render_template("portfolio/kb.html")
+    return render_template("portfolio/sec.html")
+
+
+@application.route("/portfolio-samsung")
+def samsung():
+    return render_template("portfolio/sec.html")
 
 
 @application.route("/metrics")

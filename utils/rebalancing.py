@@ -1,8 +1,10 @@
 import re
 import json 
 import requests
+import calendar
 import pandas as pd 
 from bs4 import BeautifulSoup
+from collections import defaultdict
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
@@ -149,7 +151,7 @@ def get_ratio(names, prices, ratios):
     return new_ratios
 
 
-def back_test(money: int, interval: int, start_day: str, end_day: str, stock_list, monthly_amount: int, start_from_latest_stock: int):
+def back_test(money: int, interval: int, start_day: str, end_day: str, stock_list, monthly_amount: int, start_from_latest_stock: int, ks_df):
     total_invest_money = money
     stock_code = [sss[0] for sss in stock_list]
     stock_name = [sss[1] for sss in stock_list]
@@ -162,7 +164,9 @@ def back_test(money: int, interval: int, start_day: str, end_day: str, stock_lis
     # 시작일 설정
     first_date = 0
     for i in stock_code:
-        org_time = get_stock_origintime(i)
+        idx = ks_df[ks_df['ticker']==i].index
+        org_time = int(ks_df['start_date'][idx].values[0])
+        # print(f"시작일 :: {first_date}, org time :: {org_time}\n\n\n\n\n")
         if start_from_latest_stock:
             if first_date == 0 or first_date < org_time:
                 first_date = org_time
@@ -256,6 +260,62 @@ def back_test(money: int, interval: int, start_day: str, end_day: str, stock_lis
     return final_df
 
 
+def get_month_range(year, month):
+    date = datetime(year=year, month=month, day=1).date()
+    monthrange = calendar.monthrange(date.year, date.month)
+    return monthrange
+
+def setting_json(info, df):
+    # 시작일, 종료일 설정    
+    start_date = get_month_range(int(info['startYear'][0]), int(info['startMonth'][0]))[0]
+    end_date = get_month_range(int(info['endYear'][0]), int(info['endMonth'][0]))[1]
+    
+    stock_list = []
+    for t, r in zip(info['ticker'], info['ratio']):
+        idx = df[df['name']==t].index
+        tmp = [df['ticker'][idx].values[0], t, float(r)/100]
+        stock_list.append(tmp)
+        
+    input_value = {
+        "num_of_portfolio": 1,
+        "start_from_latest_stock": 0,
+        "portfolio_0": {
+            "stock_list": stock_list,
+            "balance": info['moneyToStart'][0],
+            "monthly_amount": info['monthlySave'][0],
+            "interval_month": info['periods'][0],
+            "start_date": start_date,
+            "end_date": end_date
+        }
+    }
+    print(input_value)
+    return input_value
+    
+    
+def rebalance(info):
+    ks_df = pd.read_csv('utils/data/korea_stock.csv')
+    stock_info = setting_json(info, ks_df)
+    num_of_portfolio = stock_info['num_of_portfolio']  # 테스트할 포트폴리오 개수
+    start_from_latest_stock = stock_info['start_from_latest_stock']  # 가장 최근에 상장한 날짜부터 계산할 지 여부: "true" or "false", "false" 인 경우에는 가장 처음에 상장한 날짜부터 테스트
+    df_list =[]
+
+    # 테스트 할 포트폴리오 별 셋팅 정보 확인
+    portfolio_list = []
+    for i in range(num_of_portfolio):
+        portfolio_list.append(stock_info['portfolio_' + str(i)])
+        p = portfolio_list[i]
+        stock_list = p['stock_list']
+        balance = p['balance']
+        interval = p['interval_month']
+        start_date = p['start_date']
+        end_date = p['end_date']
+        monthly_amount = p['monthly_amount']
+        
+        # backtest 수행
+        final_df = back_test(balance, interval, start_date, end_date, stock_list, monthly_amount, start_from_latest_stock, ks_df)
+        return final_df
+        
+        
 if __name__ == "__main__":
     try:        
         stock_file_path = "./utils/StockInfo.json"
