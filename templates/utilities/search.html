@@ -1,12 +1,12 @@
-{% extends 'base.html'%} {% block contents%}
+{% extends 'base.html'%} {% block contents %}
 
 <div class="card shadow mb-4">
   <div class="card-header py-3">
-    <h6 class="m-0 font-weight-bold text-primary">{{name}}</h6>
+    <h3 class="m-0 font-weight-bold text-primary">{{name}}</h3>
   </div>
   <div class="card-body">
     <iframe
-      src="https://navercomp.wisereport.co.kr/v2/company/c1010001.aspx?cmp_cd={{name}}"
+      src="https://navercomp.wisereport.co.kr/v2/company/c1010001.aspx?cmp_cd={{ticker}}"
       name="naverfinance"
       scrolling="auto"
       width="750px"

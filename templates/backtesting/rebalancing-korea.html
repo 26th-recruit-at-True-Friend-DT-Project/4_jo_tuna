@@ -190,7 +190,7 @@
 </div>
 
 <!-- 조건 결과 출력 부분 -->
-{% if info %}
+{% if daily_label %}
 <div class="card shadow mb-4">
   <div class="card-header py-3">
     <h3 class="m-0 font-weight-bold text-primary">리밸런싱 결과</h3>
@@ -205,9 +205,9 @@
       </li>
       <!-- <li class="tab-link" data-tab="tab_exposures">Exposures</li> -->
       <li class="tab-link" data-tab="tab_metrics">Metrics</li>
+      <li class="tab-link" data-tab="tab_growthReturns">Growth Returns</li>
       <li class="tab-link" data-tab="tab_annualReturns">Annual Returns</li>
       <li class="tab-link" data-tab="tab_monthlyReturns">Monthly Returns</li>
-      <li class="tab-link" data-tab="tab_rollingReturns">Rolling Returns</li>
     </ul>
 
     <!-- Result Tab - Summary -->
@@ -216,15 +216,15 @@
     <!-- Result Tab - Metrics  -->
     {% include 'backtesting/tabs/tab-metrics.html' %}
 
+    <!-- Result Tab - Growth Returns -->
+    {% include 'backtesting/tabs/tab-growthreturns.html' %}
+
     <!-- Result Tab- Annual Returns  -->
     {% include 'backtesting/tabs/tab-annualreturns.html' %}
 
     <!-- Result Tab- Monthly Returns  -->
     {% include 'backtesting/tabs/tab-monthlyreturns.html' %}
-
-    <!-- Result Tab - Rolling Returns -->
-    {% include 'backtesting/tabs/tab-rollingreturns.html' %}
   </div>
 </div>
 
-{% endif %} {% endblock contents%}
+{% endif %} {% endblock contents %}

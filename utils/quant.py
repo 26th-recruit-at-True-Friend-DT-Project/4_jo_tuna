@@ -28,6 +28,18 @@ def get_finance_data(path):
     clean_df = raw_data.loc[ raw_data.index.dropna() ]
     return clean_df
 
+def select_code_by_price(price_df, data_df, start_date):
+    #사용된 투자지표에 있는 종목들이 가격데이터에 없으면 가격데이터에서 종목 삭제
+    new_code_list = []
+    for code in price_df[start_date].iloc[0].dropna().index:
+        if 'A'+code in list(data_df.index):
+            new_code_list.append('A'+code)
+        
+        #new_code_list.append('A' + code)
+        
+    selected_df =  data_df.loc[new_code_list]
+    return selected_df
+
 def get_strategy_date(start_date):
     # [코드 5.24] 백테스트 시작날짜가 주어지면 전략 기준 날짜를 계산하는 함수 (Ch5. 백테스트.ipynb)
     temp_year = int(start_date.split('-')[0])
@@ -212,7 +224,7 @@ def get_mdd(back_test_df):
         if max_list[-1] > max_list[-2]:
             mdd_list.append(0)
         else:
-            mdd_list.append(min(back_test_df['총변화율'][i] - max_list[-1], mdd_list[-1])   )
+            mdd_list.append(min(back_test_df['총변화율'][i] - max_list[-1], mdd_list[-1]))
 
     back_test_df['max'] = max_list
     back_test_df['MDD'] = mdd_list
@@ -239,20 +251,10 @@ if __name__ == "__main__":
     fr_df = get_finance_data(fr_path)
     invest_path = 'utils/data/투자지표데이터.xlsx'
     invest_df = get_finance_data(invest_path)
-    price_path = 'utils/data/가격데이터.xlsx'
+    price_path = 'utils/data/가격데이터.csv'
     price_df = pd.read_excel(price_path)
     price_df = price_df.set_index('Unnamed: 0')
 
-
-    #fs_path = r'C:\Users\JK\Desktop\주식 책쓰기\주식 책 데이터\재무제표데이터.xlsx'
-    # fs_df_14 = get_finance_data(fs_path_14)
-    #fr_path = r'C:\Users\JK\Desktop\주식 책쓰기\주식 책 데이터\재무비율데이터.xlsx'
-    # fr_df_14 = get_finance_data(fr_path_14)
-    #invest_path = r'C:\Users\JK\Desktop\주식 책쓰기\주식 책 데이터\투자지표데이터.xlsx'
-    # invest_df_14 = get_finance_data(invest_path_14)
-    #price_path = r'C:\Users\JK\Desktop\주식 책쓰기\주식 책 데이터\가격데이터.xlsx'
-    # price_df_14 = pd.read_excel(price_path_14)
-    # price_df_14=price_df_14.set_index('Unnamed: 0')
 
     back_test_result1 = backtest_re(strategy, start_date, end_date, initial_money, price_df, fr_df, fs_df, 20, value_type='PER')
     # back_test_result2 = backtest_re(strategy, start_date, end_date, initial_money, price_df, fr_df, fs_df, 20, value_type='PBR')

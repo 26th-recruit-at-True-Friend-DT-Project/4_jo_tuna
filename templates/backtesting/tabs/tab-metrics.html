@@ -17,31 +17,17 @@
           >
             <thead>
               <tr>
-                <th>Metric</th>
-                <th>Portfolio</th>
+                <th scope="col" style="text-align: center">Metric</th>
+                <th scope="col" style="text-align: center">Portfolio</th>
               </tr>
             </thead>
             <tbody>
+              {% for k, v in metrics.items() %}
               <tr>
-                <td>Tiger Nixon</td>
-                <td>System Architect</td>
+                <td style="text-align: center" scope="row">{{k}}</td>
+                <td style="text-align: right">{{v}}</td>
               </tr>
-              <tr>
-                <td>Tiger Nixon</td>
-                <td>System Architect</td>
-              </tr>
-              <tr>
-                <td>Tiger Nixon</td>
-                <td>System Architect</td>
-              </tr>
-              <tr>
-                <td>Tiger Nixon</td>
-                <td>System Architect</td>
-              </tr>
-              <tr>
-                <td>Tiger Nixon</td>
-                <td>System Architect</td>
-              </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>

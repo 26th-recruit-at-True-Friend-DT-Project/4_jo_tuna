@@ -3,18 +3,104 @@ import requests
 import numpy as np
 import pandas as pd
 import FinanceDataReader as fdr
+from datetime import datetime
+from itertools import groupby, chain
 from lxml import html
 from scipy.stats import norm
 from bs4 import BeautifulSoup
-from datetime import datetime
-from itertools import groupby, chain
 from urllib.request import Request, urlopen
 from urllib.parse import urlencode, quote_plus, unquote
 
+# 무위험 금리(CD91) 불러오기
+
+def get_product(KEY, STAT_CD, PERIOD, START_DATE, END_DATE, ITEM_CODE):
+    # 파이썬에서 인터넷을 연결하기 위해 urllib 패키지 사용. urlopen함수는 지정한 url과 소켓 통신을 할 수 있도록 자동 연결해줌
+    url = 'http://ecos.bok.or.kr/api/StatisticSearch/{}/xml/kr/1/30000/{}/{}/{}/{}/{}'.format(
+        KEY         # 인증키
+        , STAT_CD   # 추출할 통계지표의 코드
+        , PERIOD    # 기간 단위
+        , START_DATE # 데이터 시작일
+        , END_DATE  # 데이터 종료일
+        , ITEM_CODE # 통계항목 코드
+    )
+
+    response = requests.get(url).content.decode('utf-8')
+    
+    xml_obj = BeautifulSoup(response, 'lxml-xml')
+    # xml_obj
+    rows = xml_obj.findAll("row")
+    return rows
+
+def get_rf():
+    # 파라미터 정의
+    # 추출하고자 하는 통계지표 disc type - {통계지표 코드: 통계지표명}
+    data_dict = {
+    '817Y002' : '시장금리(일별)'
+    }
+    KEY = 'DSFS58V3CLRQ4KOKWNVH'    # 인증키
+    ITEM_CODE = '010502000' # 통계항목 코드
+    
+    # 그외 파라미터
+    PERIOD = 'D'
+    START_DATE = '20120101'
+    END_DATE = '20230119'
+    
+    # API의 반환(출력)값 중 저장하고자 하는 항목(item) 리스트
+    item_list = [
+    'STAT_CODE' # 통계표코드
+    , 'STAT_NAME' # 통계명
+    , 'ITEM_CODE1' # 통계항목1코드
+    , 'ITEM_NAME1' # 통계항목명1
+    , 'ITEM_CODE2' # 통계항목2코드
+    , 'ITEM_NAME2' # 통계항목명2
+    , 'ITEM_CODE3' # 통계항목3코드
+    , 'ITEM_NAME3' # 통계항목명3
+    , 'UNIT_NAME' # 단위
+    , 'TIME' # 시점
+    , 'DATA_VALUE'# 값
+    ]
+
+    # 결과치를 담을 빈 리스트 생성
+    result_list = list()
+    
+    # API를 순차적으로 호출하고 값을 담는 for loop 구문
+    for k in data_dict.keys():
+        rows = get_product(KEY, k, PERIOD, START_DATE, END_DATE, ITEM_CODE)
+        
+        for p in range(0, len(rows)):
+            info_list = list()
+            
+            for i in item_list:
+                try:
+                    individual_info = rows[p].find(i).text # 만약 반환 중 error가 발생하면
+                except:
+                    individual_info = "" # 해당 항목은 공란으로 채운다
+            
+                info_list.append(individual_info)
+            result_list.append(info_list)
+
+    # 결과 리스트를 DataFrame으로 변환 + 컬럼명 지정
+    result_df = pd.DataFrame(result_list, columns=[
+    '통계표코드'
+    , '통계명'
+    , '통계항목1코드'
+    , '통계항목명1'
+    , '통계항목2코드'
+    , '통계항목명2'
+    , '통계항목3코드'
+    , '통계항목명3'
+    , '단위'
+    , '시점'
+    , '값'
+    ]).drop_duplicates() # 중복된 row 제거
+
+    return result_df['값'].astype(float).mean()/25200
+
 
 class Core():
-    def __init__(self):
+    def __init__(self, r_f):
         self.annual=252
+        self.r_f = r_f
     # 산술평균 수익률
     def average(self, returns):
         return returns.mean()*self.annual
@@ -45,9 +131,10 @@ class Core():
     # 베타
     def beta(self, returns, benchmark):
         return returns.cov(benchmark) / returns.std() ** 2
+    
     # 알파 : R펀드실제 －[R무위험 ＋ β펀드 {E(R시장) －R무위험 }]
     def alpha(self, returns, benchmark):
-        return (1+returns).prod() - (r_f + (returns.cov(benchmark)/returns.std() ** 2)) * (benchmark.mean() - r_f)
+        return (1+returns).prod() - (self.r_f + (returns.cov(benchmark)/returns.std() ** 2)) * (benchmark.mean() - self.r_f)
         
     # 한번에 출력
     def print_result(self, returns, benchmark, target=0.0):
@@ -60,15 +147,17 @@ class Core():
         correl = self.correl(returns, benchmark)
         beta = self.beta(returns, benchmark)
         alpha = self.alpha(returns, benchmark)
-        result = {"산술평균" : average,
-              "CAGR": cagr,
-              "표준편차": stdev,
-              "하방 표준편차": downdev,
-              "상방 표준편차": updev,
-              "공분산": covar,
-              "상관계수": correl,
-                 "베타": beta,
-                 "알파" : alpha}
+        result = {
+            "산술평균" : average,
+            "연평균성장률": cagr,
+            "표준편차": stdev,
+            "하방 표준편차": downdev,
+            "상방 표준편차": updev,
+            "공분산": covar,
+            "상관계수": correl,
+            "베타": beta,
+            "알파" : alpha
+        }
         return result
 
 
@@ -142,15 +231,17 @@ class Tail():
         avar = self.aVaR(returns)
         cvar = self.CVaR(returns, percentile)
         
-        result = {"Skewness" : skew,
-                  "Kurtosis" : kurt,
-                  "Co-Skewness" : coskew,
-                  "Co-Kurtosis" : cokurt,
-                  "Maximum Drawdown" : mdd,
-                  "Maximum Drawdown Duration" : mddur,
-                  "99% HVaR" : hvar,
-                  "99% AVaR" : avar,
-                  "99% CVaR" : cvar}
+        result = {
+            "왜도" : skew,
+            "첨도" : kurt,
+            "공왜도" : coskew,
+            "공첨도" : cokurt,
+            "최대 손실 낙폭" : mdd,
+            "최대 손실 낙폭 기간" : mddur,
+            "99% 역사적 VaR" : hvar,
+            "99% 분석적 VaR" : avar,
+            "99% 조건부 Var" : cvar
+        }
         return result
 
 
@@ -163,7 +254,7 @@ class Performance(Core, Tail):    # Inherit from Core(), Tail()
         return self.average(returns - benchmark) / self.stdev(returns - benchmark)
     # 샤프 비율 : 전략의 성과를 평가하기 위한 지표로 초과 수익률의 평균을 변동성으로 나눔
     def sharpe_ratio(self, returns):
-        return self.average(returns - r_f) / self.stdev(returns)
+        return self.average(returns - self.r_f) / self.stdev(returns)
     # 조정 샤프 비율 : 초과 수익률의 왜도와 첨도를 반영하여 테일 리스크가 반영된 샤프비율
     def adjusted_sharpe_ratio(self, returns):
         skewness = self.skewness(returns)
@@ -204,92 +295,77 @@ class Performance(Core, Tail):    # Inherit from Core(), Tail()
         cvarratio = self.reward_to_CVaR_ratio(returns, benchmark)
         hitratio = self.hit_ratio(returns)
         gpratio = self.gain_to_pain_ratio(returns)
-        
-        result = {"Track Error" : track_error,
-                  "Information Ratio" : information_ratio,
-                  "Sharpe Ratio" : sr,
-                  "Adjusted Sharpe Ratio" : asr,
-                  "Sortino Ratio" : sortino,
-                  "Calmar Ratio" : calmar,
-                  "Treynor Ratio" : treynor,
-                  "Reward-to-VaR Ratio" : varratio,
-                  "Reward-to-CVaR Ratio" : cvarratio,
-                  "Hit Ratio" : hitratio,
-                  "Gain-to-Pain Ratio" : gpratio}
+        result = {
+            "추적 오차" : track_error,
+            "정보 비율" : information_ratio,
+            "샤프 비율" : sr,
+            "조정 샤프 Ratio" : asr,
+            "소르티노 Ratio" : sortino,
+            "칼마 Ratio" : calmar,
+            "트레이너 Ratio" : treynor,
+            "VaR 대비 성과 Ratio" : varratio,
+            "CVaR 대비 성과 Ratio" : cvarratio,
+            "승률" : hitratio,
+            "손익비" : gpratio
+        }
         return result
 
 
-# 무위험 금리(CD91) 불러오기
-def get_product(KEY, STAT_CD, PERIOD, START_DATE, END_DATE):
-    # 파이썬에서 인터넷을 연결하기 위해 urllib 패키지 사용. urlopen함수는 지정한 url과 소켓 통신을 할 수 있도록 자동 연결해줌
-    # 인증키, 추출할 통계지표의 코드, 기간 단위, 데이터 시작일, 종료일, 통계항목 코드
-    url = f"http://ecos.bok.or.kr/api/StatisticSearch/{KEY}/xml/kr/1/30000/{STAT_CD}/{PERIOD}/{START_DATE}/{END_DATE}/{ITEM_CODE}"
-    response = requests.get(url).content.decode('utf-8')
-    xml_obj = BeautifulSoup(response, 'lxml-xml')
-    rows = xml_obj.findAll("row")
-    return rows
-
+def get_metrics(start_date, end_date, pf_return):
+    start_date = f"{start_date[:4]}-{start_date[4:6]}-{start_date[6:]}"
+    end_date = f"{end_date[:4]}-{end_date[4:6]}-{end_date[6:]}"
+    
+    kospi = fdr.DataReader('KS11', start_date, end_date)
+    kospi_ret = kospi['Close'].pct_change().dropna()
+    r_f = get_rf()
+    
+    # 1. Core Analytics
+    core = Core(r_f)
+    core_result = core.print_result(pf_return, kospi_ret)
+    
+    # 2. Tail-Risk Analytics
+    tail = Tail()
+    tail_result = tail.print_result(pf_return, kospi_ret)
+    
+    # 3. Performance Evaluation Analytics
+    perform = Performance(r_f)
+    perform_result = perform.print_result(pf_return, kospi_ret)
+        
+    table = {**core_result, **tail_result, **perform_result}
+    
+    result = pd.Series(table).to_dict()
+    for k, v in result.items():
+        if k == "최대 손실 낙폭 기간":
+            result[k] = f"{int(v)}일"
+        elif k in ("상관계수", "베타", "왜도", "첨도", "공왜도", "공첨도", "정보 비율", "샤프 비율", "조정 샤프 비율", "소르티노 비율", "칼마 비율", "트레이너 비율", "VaR 대비 성과 비율", "CVaR 대비 성과 비율", "승률", "손익비"):
+            result[k] = round(v, 2)
+        else:
+            result[k] = f"{round(v*100, 2)}%"
+    return result
 
 if __name__ == "__main__":
-    data_dict = {'817Y002' : '시장금리(일별)'}  # 파라미터 정의 :: 추출하고자 하는 통계지표 disc type - {통계지표 코드: 통계지표명}
-    KEY = 'DSFS58V3CLRQ4KOKWNVH'    # 인증키
-    ITEM_CODE = '010502000'         # 통계항목 코드
-    PERIOD = 'D'
-    START_DATE = '20120101'
-    END_DATE = '20230119'
+    
+    start_date = '2012-01-01'
+    end_date = '2023-01-19'
 
-    # API의 반환(출력)값 중 저장하고자 하는 항목(item) 리스트
-    item_list = [
-    'STAT_CODE' # 통계표코드
-    , 'STAT_NAME' # 통계명
-    , 'ITEM_CODE1' # 통계항목1코드
-    , 'ITEM_NAME1' # 통계항목명1
-    , 'ITEM_CODE2' # 통계항목2코드
-    , 'ITEM_NAME2' # 통계항목명2
-    , 'ITEM_CODE3' # 통계항목3코드
-    , 'ITEM_NAME3' # 통계항목명3
-    , 'UNIT_NAME' # 단위
-    , 'TIME' # 시점
-    , 'DATA_VALUE'# 값
-    ]
+    kospi = fdr.DataReader('KS11', start_date, end_date)
+    pf_return=back_test_result3['일변화율'].dropna()    # 함수에 따라서 달라지는 전략
+    kospi_ret = kospi['Close'].pct_change().dropna()
 
-    # 결과치를 담을 빈 리스트 생성
-    result_list = list()
-
-    # API를 순차적으로 호출하고 값을 담는 for loop 구문
-    for k in data_dict.keys():
-        rows = get_product(KEY, k, PERIOD, START_DATE, END_DATE)
-        print(len(rows)) # 수집해야 할 데이터의 row가 총 몇 개인지 출력
-
-        for p in range(0, len(rows)):
-            info_list = list()
-            
-            for i in item_list:
-                try:
-                    individual_info = rows[p].find(i).text # 만약 반환 중 error가 발생하면
-                except:
-                    individual_info = "" # 해당 항목은 공란으로 채운다
-            
-                info_list.append(individual_info)
-            result_list.append(info_list)
-        result_list
-
-
-    # 결과 리스트를 DataFrame으로 변환 + 컬럼명 지정
-    result_df = pd.DataFrame(result_list, columns=[
-    '통계표코드'
-    , '통계명'
-    , '통계항목1코드'
-    , '통계항목명1'
-    , '통계항목2코드'
-    , '통계항목명2'
-    , '통계항목3코드'
-    , '통계항목명3'
-    , '단위'
-    , '시점'
-    , '값'
-    ]).drop_duplicates() # 중복된 row 제거
-
-    numeric_df = pd.to_numeric(result_df['값'])
-    r_f = numeric_df.mean()
-    r_f = (r_f / 100) / 255
+    # 1. Core Analytics
+    core = Core()
+    core_result = core.print_result(pf_return, kospi_ret)
+    
+    # 2. Tail-Risk Analytics
+    tail = Tail()
+    tail_result = tail.print_result(pf_return, kospi_ret)
+    
+    # 3. Performance Evaluation Analytics
+    perform = Performance()
+    perform_result = perform.print_result(pf_return, kospi_ret)
+        
+    table = {**core_result, **tail_result, **perform_result}
+    
+    result = pd.Series(table)
+    result = result.to_frame()
+    

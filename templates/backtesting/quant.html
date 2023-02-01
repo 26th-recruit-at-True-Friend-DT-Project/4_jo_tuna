@@ -190,7 +190,7 @@
 </div>
 
 <!-- 조건 결과 출력 부분 -->
-{% if info %}
+{% if daily_label %}
 <div class="card shadow mb-4">
   <div class="card-header py-3">
     <h3 class="m-0 font-weight-bold text-primary">리밸런싱 결과</h3>
@@ -205,308 +205,26 @@
       </li>
       <!-- <li class="tab-link" data-tab="tab_exposures">Exposures</li> -->
       <li class="tab-link" data-tab="tab_metrics">Metrics</li>
+      <li class="tab-link" data-tab="tab_growthReturns">Growth Returns</li>
       <li class="tab-link" data-tab="tab_annualReturns">Annual Returns</li>
       <li class="tab-link" data-tab="tab_monthlyReturns">Monthly Returns</li>
-      <li class="tab-link" data-tab="tab_rollingReturns">Rolling Returns</li>
     </ul>
 
     <!-- Result Tab - Summary -->
-    <div id="tab_summary" class="tab-content current">
-      <div class="my-3 result-section">
-        <!-- Performance Summary -->
-        <div class="card shadow mb-4">
-          <div class="card-header py-3">
-            <h5 class="m-0 font-weight-bold text-primary">성과 요약</h5>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table
-                class="table table-bordered"
-                id="dataTable"
-                width="100%"
-                cellspacing="0"
-              >
-                <thead>
-                  <tr>
-                    <th>Initial Balance</th>
-                    <th>Final Balance</th>
-                    <th>CAGR</th>
-                    <th>Stdev</th>
-                    <th>Best Year</th>
-                    <th>Worst Year</th>
-                    <th>MDD</th>
-                    <th>Sharpe Ratio</th>
-                    <th>Sortino Ratio</th>
-                    <th>Market Correlation</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Edinburgh</td>
-                    <td>61</td>
-                    <td>2011/04/25</td>
-                    <td>$320,800</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-xl-8 col-lg-7">
-            <!-- Portfolio Growth -->
-            <div class="card shadow mb-4">
-              <div class="card-header py-3">
-                <h5 class="m-0 font-weight-bold text-primary">
-                  Portfolio Growth
-                </h5>
-              </div>
-              <div class="card-body">
-                <div class="chart-area">
-                  <canvas id="myAreaChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Equity Sectors -->
-          <div class="col-xl-4 col-lg-5">
-            <div class="card shadow mb-4">
-              <!-- Card Header - Dropdown -->
-              <div class="card-header py-3">
-                <h5 class="m-0 font-weight-bold text-primary">
-                  Equity Sectors
-                </h5>
-              </div>
-              <!-- Card Body -->
-              <div class="card-body">
-                <div class="chart-pie pt-4">
-                  <canvas id="myPieChart"></canvas>
-                </div>
-                <hr />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- <div id="tab_exposures" class="tab-content">two</div> -->
+    {% include 'backtesting/tabs/tab-summary.html' %}
 
     <!-- Result Tab - Metrics  -->
-    <div id="tab_metrics" class="tab-content">
-      <div class="my-3 result-section">
-        <!-- Performance Summary -->
-        <div class="card shadow mb-4">
-          <div class="card-header py-3">
-            <h5 class="m-0 font-weight-bold text-primary">
-              Risk and Return Metrics
-            </h5>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table
-                class="table table-bordered"
-                id="dataTable"
-                width="100%"
-                cellspacing="0"
-              >
-                <thead>
-                  <tr>
-                    <th>Metric</th>
-                    <th>Portfolio</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                  </tr>
-                  <tr>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                  </tr>
-                  <tr>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                  </tr>
-                  <tr>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                  </tr>
-                  <tr>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% include 'backtesting/tabs/tab-metrics.html' %}
+
+    <!-- Result Tab - Growth Returns -->
+    {% include 'backtesting/tabs/tab-growthreturns.html' %}
 
     <!-- Result Tab- Annual Returns  -->
-    <div id="tab_annualReturns" class="tab-content">
-      <div class="my-3 result-section">
-        <!-- Bar Chart -->
-        <div class="card shadow mb-4">
-          <div class="card-header py-3">
-            <h5 class="m-0 font-weight-bold text-primary">Bar Chart</h5>
-          </div>
-          <div class="card-body">
-            <div class="chart-bar">
-              <canvas id="myBarChart"></canvas>
-            </div>
-            <hr />
-            Styling for the bar chart can be found in the
-            <code>/js/demo/chart-bar-demo.js</code> file.
-          </div>
-        </div>
-
-        <div class="card shadow mb-4">
-          <div class="card-header py-3">
-            <h5 class="m-0 font-weight-bold text-primary">Annual Returns</h5>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table
-                class="table table-bordered"
-                id="dataTable"
-                width="100%"
-                cellspacing="0"
-              >
-                <thead>
-                  <tr>
-                    <th>Year</th>
-                    <th>Inflation</th>
-                    <th>Portfolio Return</th>
-                    <th>Portfolio Balance</th>
-                    <th>삼성전자</th>
-                    <th>네이버</th>
-                    <th>LG에너지솔루션</th>
-                    <th>대한한공</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                  </tr>
-                  <tr>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% include 'backtesting/tabs/tab-annualreturns.html' %}
 
     <!-- Result Tab- Monthly Returns  -->
-    <div id="tab_monthlyReturns" class="tab-content">
-      <div class="my-3 result-section">
-        <!-- Bar Chart -->
-        <div class="card shadow mb-4">
-          <div class="card-header py-3">
-            <h5 class="m-0 font-weight-bold text-primary">Bar Chart</h5>
-          </div>
-          <div class="card-body">
-            <div class="chart-bar">
-              <canvas id="myBarChart"></canvas>
-            </div>
-            <hr />
-            Styling for the bar chart can be found in the
-            <code>/js/demo/chart-bar-demo.js</code> file.
-          </div>
-        </div>
-
-        <div class="card shadow mb-4">
-          <div class="card-header py-3">
-            <h5 class="m-0 font-weight-bold text-primary">Annual Returns</h5>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table
-                class="table table-bordered"
-                id="dataTable"
-                width="100%"
-                cellspacing="0"
-              >
-                <thead>
-                  <tr>
-                    <th>Year</th>
-                    <th>Inflation</th>
-                    <th>Portfolio Return</th>
-                    <th>Portfolio Balance</th>
-                    <th>삼성전자</th>
-                    <th>네이버</th>
-                    <th>LG에너지솔루션</th>
-                    <th>대한한공</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                  </tr>
-                  <tr>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                    <td>Tiger Nixon</td>
-                    <td>System Architect</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Result Tab - Rolling Returns -->
-    <div id="tab_rollingReturns" class="tab-content">
-      <div class="my-3 result-section">
-        <!-- Portfolio Growth -->
-        <div class="card shadow mb-4">
-          <div class="card-header py-3">
-            <h5 class="m-0 font-weight-bold text-primary">Rolling Return</h5>
-          </div>
-          <div class="card-body">
-            <div class="chart-area">
-              <canvas id="myAreaChart"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% include 'backtesting/tabs/tab-monthlyreturns.html' %}
   </div>
 </div>
 
-{% endif %} {% endblock contents%}
+{% endif %} {% endblock contents %}
