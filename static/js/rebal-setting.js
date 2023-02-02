@@ -73,8 +73,25 @@ function sumRatio() {
 
 function validateForm() {
   const total = document.getElementById("percent-number");
+  const startYear = document.getElementsByName("startYear")[0].value;
+  const startMonth = document.getElementsByName("startMonth")[0].value;
+  const endYear = document.getElementsByName("endYear")[0].value;
+  const endMonth = document.getElementsByName("endMonth")[0].value;
+
   if (parseFloat(total.innerHTML) != 100) {
     alert("총 합이 100% 이어야 합니다!");
+    return false;
+  }
+
+  if (startYear > endYear) {
+    alert("시작년도가 종료년도보다 클 수 없습니다.");
+    return false;
+  }
+
+  if (startYear === endYear && startMonth >= endMonth) {
+    alert(
+      "시작년도가 종료년도와 같을 때, startMonth가 endMonth보다 클 수 없습니다."
+    );
     return false;
   }
 }

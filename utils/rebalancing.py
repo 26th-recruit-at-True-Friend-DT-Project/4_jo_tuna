@@ -160,15 +160,16 @@ def back_test(money: int, interval: int, start_day: str, end_day: str, stock_lis
     stock_name = [sss[1] for sss in stock_list]
     stock_ratio = [sss[2] for sss in stock_list]
 
-    if sum(stock_ratio) != 1:
+    '''
+    if int(sum(stock_ratio)) != 1:
         print("ERROR!!! sum of ratio is not 1.0")
-        return
+        return '''
     
     # 시작일 설정
     first_date = 0
     for i in stock_code:
         idx = ks_df[ks_df['ticker']==i].index
-        org_time = "".join(ks_df['start_date'][idx].values[0].strip("/"))
+        org_time = "".join(ks_df['start_date'][idx].values[0].split("/"))
 
         if start_from_latest_stock:
             if first_date == 0 or first_date < org_time:
@@ -176,7 +177,8 @@ def back_test(money: int, interval: int, start_day: str, end_day: str, stock_lis
         else:
             if first_date == 0 or first_date > org_time:
                 first_date = org_time
-    if first_date > start_day: start_day = first_date   # 백테스팅 시작 날짜가 주식 리스트 중 가장 첫 상장일보다 빠른 경우 보정
+    if str(first_date) > start_day: 
+        start_day = first_date   # 백테스팅 시작 날짜가 주식 리스트 중 가장 첫 상장일보다 빠른 경우 보정
     start_date = datetime.strptime(start_day, '%Y%m%d')  # 조회시작일
     cal_days = (datetime.strptime(end_day, "%Y%m%d") - start_date).days
 
@@ -297,7 +299,7 @@ def setting_json(info, df):
         idx = df[df['name']==t].index
         tmp = [df['ticker'][idx].values[0], t, float(r)/100]
         stock_list.append(tmp)
-        
+    
     # 리밸런싱 주기 설정
     interval_month = info['periods'][0]
     if interval_month == 'everyYear':
@@ -324,9 +326,10 @@ def setting_json(info, df):
     return input_value
     
     
-def rebalance(info):
-    ks_df = pd.read_csv('utils/data/korea_stock.csv')
-    stock_info = setting_json(info, ks_df)
+def rebalance(info, etf=False):
+    kdf = pd.read_csv('utils/data/korea_etf.csv') if etf else pd.read_csv('utils/data/korea_stock.csv')
+    stock_info = setting_json(info, kdf)
+    
     
     num_of_portfolio = stock_info['num_of_portfolio']
     start_from_latest_stock = stock_info['start_from_latest_stock']  # 가장 최근에 상장한 날짜부터 계산할 지 여부: "true" or "false", "false" 인 경우에는 가장 처음에 상장한 날짜부터 테스트
@@ -345,7 +348,7 @@ def rebalance(info):
         monthly_amount = p['monthly_amount']
         
         # backtest 수행
-        return back_test(balance, interval, start_date, end_date, stock_list, monthly_amount, start_from_latest_stock, ks_df)
+        return back_test(balance, interval, start_date, end_date, stock_list, monthly_amount, start_from_latest_stock, kdf)
         
         
 if __name__ == "__main__":
@@ -375,7 +378,6 @@ if __name__ == "__main__":
 
         # backtest 수행
         final_df = back_test(balance, interval, start_date, end_date, stock_list, monthly_amount, start_from_latest_stock, ks_df)
-        print(final_df)
 
         '''백테스팅 결과 표시 (점선), 백테스팅 수익률(최종평가액/투자원금)은 label에 표시
         plt.subplot(num_of_portfolio, 1, i + 1)

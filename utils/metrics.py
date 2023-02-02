@@ -299,12 +299,12 @@ class Performance(Core, Tail):    # Inherit from Core(), Tail()
             "추적 오차" : track_error,
             "정보 비율" : information_ratio,
             "샤프 비율" : sr,
-            "조정 샤프 Ratio" : asr,
-            "소르티노 Ratio" : sortino,
-            "칼마 Ratio" : calmar,
-            "트레이너 Ratio" : treynor,
-            "VaR 대비 성과 Ratio" : varratio,
-            "CVaR 대비 성과 Ratio" : cvarratio,
+            "조정 샤프 비율" : asr,
+            "소르티노 비율" : sortino,
+            "칼마 비율" : calmar,
+            "트레이너 비율" : treynor,
+            "VaR 대비 성과 비율" : varratio,
+            "CVaR 대비 성과 비율" : cvarratio,
             "승률" : hitratio,
             "손익비" : gpratio
         }
@@ -312,8 +312,9 @@ class Performance(Core, Tail):    # Inherit from Core(), Tail()
 
 
 def get_metrics(start_date, end_date, pf_return):
-    start_date = f"{start_date[:4]}-{start_date[4:6]}-{start_date[6:]}"
-    end_date = f"{end_date[:4]}-{end_date[4:6]}-{end_date[6:]}"
+    if len(start_date) != 10:
+        start_date = f"{start_date[:4]}-{start_date[4:6]}-{start_date[6:]}"
+        end_date = f"{end_date[:4]}-{end_date[4:6]}-{end_date[6:]}"
     
     kospi = fdr.DataReader('KS11', start_date, end_date)
     kospi_ret = kospi['Close'].pct_change().dropna()

@@ -11,11 +11,12 @@
         </div>
       </div>
     </div>
-
     <div class="card shadow mb-4">
       <div class="card-header py-3">
         <h5 class="m-0 font-weight-bold text-primary">Monthly Returns</h5>
       </div>
+
+      {% set baekKey=[0] %}
       <div class="card-body">
         <div class="table-responsive">
           <table
@@ -31,16 +32,27 @@
                 {% endfor %}
               </tr>
             </thead>
+            {% for key in monthly_port.keys() %} {% if key != '연월' and key !=
+            '포트폴리오' %} {% set _ = baekKey.append(key) %} {% endif %} {%
+            endfor %}
             <tbody>
               {% for i in range(monthly_port['포트폴리오'] | length) %}
               <tr>
                 {% for key in monthly_port.keys() %}
                 <td style="text-align: right">
-                  {{monthly_port[key][i]}}{%if key != '연월'%}%{% endif%}
+                  {% if key=='연월' or key=='포트폴리오' %}
+                  {{monthly_port[key][i]}}{%if key != '연월'%}%{% endif%} {%
+                  else %}
+                  <a
+                    href="#"
+                    onclick="window.open('./static/img/crawl/{{key}}_{{monthly_port['연월'][i]}}.png' ,'popup', 'width=800, height=600'); return false;"
+                    >{{monthly_port[key][i]}}{%if key != '연월'%}%{% endif %}</a
+                  >
+                  {% endif %}
                 </td>
-                {% endfor%}
+                {% endfor %}
               </tr>
-              {% endfor %}
+              {% endfor%}
             </tbody>
           </table>
         </div>

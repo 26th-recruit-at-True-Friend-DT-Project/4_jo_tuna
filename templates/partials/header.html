@@ -19,7 +19,7 @@
       <input
         type="text"
         name="company"
-        id="autoComplete"
+        id="search"
         class="form-control bg-light border-0 small"
         placeholder="Search for..."
         aria-label="Search"
@@ -284,15 +284,12 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@10.2.7/dist/autoComplete.min.js"></script>
+<script src="static/js/data.js"></script>
 <script>
   const autoCompleteJS = new autoComplete({
-    placeHolder: "Search for Food...",
+    placeHolder: "Search...",
     data: {
-      src: [
-        "Sauce - Thousand Island",
-        "Wild Boar - Tenderloin",
-        "Goat - Whole Cut",
-      ],
+      src: Data,
       cache: true,
     },
     resultItem: {
